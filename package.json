@@ -1,0 +1,33 @@
+{
+  "name": "zero-dep-wizard",
+  "version": "1.0.0",
+  "description": "Zero-dependency browser wizard/form framework with state persistence and theming",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./wizard": "./src/wizard.js",
+    "./themes/default": "./src/themes/default.js",
+    "./themes/light": "./src/themes/light.js"
+  },
+  "author": "Justice",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/zero-dep-wizard.git"
+  },
+  "keywords": [
+    "wizard",
+    "form",
+    "browser",
+    "ui",
+    "framework",
+    "zero-dependency",
+    "vanilla-js",
+    "state-persistence"
+  ],
+  "files": [
+    "src",
+    "examples"
+  ]
+}

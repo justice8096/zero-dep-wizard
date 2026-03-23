@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Survey — zero-dep-wizard</title>
+</head>
+<body>
+  <script type="module">
+    import {
+      createWizard,
+      createSection,
+      createToggle,
+      createSelect,
+      createTextInput,
+      createTextArea,
+      createAlert,
+      injectCSS,
+      loadConfigFromFile,
+      saveConfigToFile,
+      exportMarkdown
+    } from '../src/index.js';
+    import { DEFAULT_THEME } from '../src/themes/default.js';
+
+    // Initialize theme
+    injectCSS(DEFAULT_THEME);
+
+    // Survey state
+    let surveyState = {
+      step1: {
+        name: '',
+        email: ''
+      },
+      step2: {
+        experience: '',
+        interested: null
+      },
+      step3: {
+        feedback: ''
+      }
+    };
+
+    // Create wizard
+    const wizard = createWizard({
+      title: 'Example Survey',
+      subtitle: 'A simple 3-step survey using zero-dep-wizard',
+      totalSteps: 3,
+      stepLabels: ['Your Info', 'Interests', 'Feedback'],
+      stateKey: 'survey-example',
+      getState: () => surveyState,
+      setState: (state) => { surveyState = state; },
+
+      renderStep: (stepNum, container) => {
+        if (stepNum === 0) {
+          // Step 1: Personal Information
+          const section = createSection('Tell Us About Yourself', [
+            createTextInput(
+              'Name:',
+              surveyState.step1.name,
+              (value) => { surveyState.step1.name = value; }
+            ),
+            createTextInput(
+              'Email:',
+              surveyState.step1.email,
+              (value) => { surveyState.step1.email = value; },
+              'your@email.com'
+            )
+          ]);
+          container.appendChild(section);
+        } else if (stepNum === 1) {
+          // Step 2: Interests
+          const section = createSection('Your Experience & Interests', [
+            createSelect(
+              'Experience Level:',
+              [
+                { value: 'beginner', label: 'Beginner' },
+                { value: 'intermediate', label: 'Intermediate' },
+                { value: 'advanced', label: 'Advanced' }
+              ],
+              surveyState.step2.experience,
+              (value) => { surveyState.step2.experience = value; }
+            ),
+            createToggle(
+              'Interested in Updates?',
+              surveyState.step2.interested,
+              (value) => { surveyState.step2.interested = value; }
+            )
+          ]);
+          container.appendChild(section);
+        } else if (stepNum === 2) {
+          // Step 3: Feedback
+          const section = createSection('Feedback', [
+            createTextArea(
+              'Comments:',
+              surveyState.step3.feedback,
+              (value) => { surveyState.step3.feedback = value; },
+              'Share your thoughts...'
+            ),
+            createAlert('info', 'Thank you for completing the survey!')
+          ]);
+          container.appendChild(section);
+        }
+      },
+
+      onLoad: () => {
+        loadConfigFromFile((config) => {
+          surveyState = config;
+          wizard.refreshStep();
+        });
+      },
+
+      onSave: () => {
+        saveConfigToFile(surveyState);
+      },
+
+      onExport: () => {
+        const markdown = `# Survey Results
+
+**Name:** ${surveyState.step1.name}
+**Email:** ${surveyState.step1.email}
+
+## Experience
+
+**Level:** ${surveyState.step2.experience}
+**Wants Updates:** ${surveyState.step2.interested ? 'Yes' : 'No'}
+
+## Feedback
+
+${surveyState.step3.feedback || '(No feedback provided)'}
+`;
+        exportMarkdown('survey-results.md', markdown);
+      }
+    });
+
+    // Render the wizard
+    wizard.render();
+  </script>
+</body>
+</html>
