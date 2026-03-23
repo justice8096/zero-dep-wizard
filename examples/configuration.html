@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Wizard — zero-dep-wizard</title>
+</head>
+<body>
+  <script type="module">
+    import {
+      createWizard,
+      createSection,
+      createToggle,
+      createSelect,
+      createTextInput,
+      createTextArea,
+      createAlert,
+      injectCSS,
+      loadConfigFromFile,
+      saveConfigToFile,
+      el
+    } from '../src/index.js';
+    import { LIGHT_THEME } from '../src/themes/light.js';
+
+    // Initialize theme
+    injectCSS(LIGHT_THEME);
+
+    // Configuration state
+    let configState = {
+      database: {
+        host: 'localhost',
+        port: '5432',
+        name: 'myapp_db',
+        sslEnabled: false
+      },
+      cache: {
+        enabled: true,
+        ttl: '3600',
+        backend: 'redis'
+      },
+      logging: {
+        level: 'info',
+        enableCloudLogging: false,
+        retentionDays: '30'
+      },
+      security: {
+        corsEnabled: true,
+        corsOrigins: '',
+        rateLimitEnabled: true,
+        rateLimitRequests: '100'
+      }
+    };
+
+    // Create wizard
+    const wizard = createWizard({
+      title: 'Application Configuration',
+      subtitle: 'Configure your application settings across database, cache, logging, and security',
+      totalSteps: 4,
+      stepLabels: ['Database', 'Cache', 'Logging', 'Security'],
+      stateKey: 'config-wizard',
+      getState: () => configState,
+      setState: (state) => { 
+        Object.assign(configState, state);
+      },
+
+      renderStep: (stepNum, container) => {
+        if (stepNum === 0) {
+          // Database Configuration
+          const section = createSection('Database Configuration', [
+            createTextInput(
+              'Host:',
+              configState.database.host,
+              (value) => { configState.database.host = value; },
+              'localhost'
+            ),
+            createTextInput(
+              'Port:',
+              configState.database.port,
+              (value) => { configState.database.port = value; },
+              '5432'
+            ),
+            createTextInput(
+              'Database Name:',
+              configState.database.name,
+              (value) => { configState.database.name = value; },
+              'myapp_db'
+            ),
+            createToggle(
+              'Enable SSL Connection?',
+              configState.database.sslEnabled,
+              (value) => { configState.database.sslEnabled = value; }
+            ),
+            createAlert('info', 'Database credentials are configured separately in environment variables for security.')
+          ]);
+          container.appendChild(section);
+
+        } else if (stepNum === 1) {
+          // Cache Configuration
+          const section = createSection('Cache Configuration', [
+            createToggle(
+              'Enable Caching?',
+              configState.cache.enabled,
+              (value) => { configState.cache.enabled = value; }
+            ),
+            createSelect(
+              'Cache Backend:',
+              [
+                { value: 'redis', label: 'Redis' },
+                { value: 'memcached', label: 'Memcached' },
+                { value: 'in-memory', label: 'In-Memory' }
+              ],
+              configState.cache.backend,
+              (value) => { configState.cache.backend = value; }
+            ),
+            createTextInput(
+              'TTL (seconds):',
+              configState.cache.ttl,
+              (value) => { configState.cache.ttl = value; },
+              '3600'
+            ),
+            createAlert('info', 'Shorter TTL values reduce memory usage but increase backend load.')
+          ]);
+          container.appendChild(section);
+
+        } else if (stepNum === 2) {
+          // Logging Configuration
+          const section = createSection('Logging Configuration', [
+            createSelect(
+              'Log Level:',
+              [
+                { value: 'error', label: 'Error' },
+                { value: 'warn', label: 'Warning' },
+                { value: 'info', label: 'Info' },
+                { value: 'debug', label: 'Debug' },
+                { value: 'trace', label: 'Trace' }
+              ],
+              configState.logging.level,
+              (value) => { configState.logging.level = value; }
+            ),
+            createToggle(
+              'Enable Cloud Logging (e.g., CloudWatch)?',
+              configState.logging.enableCloudLogging,
+              (value) => { configState.logging.enableCloudLogging = value; }
+            ),
+            createTextInput(
+              'Log Retention (days):',
+              configState.logging.retentionDays,
+              (value) => { configState.logging.retentionDays = value; },
+              '30'
+            ),
+            createAlert('warning', 'Higher log retention increases storage costs. Adjust based on compliance requirements.')
+          ]);
+          container.appendChild(section);
+
+        } else if (stepNum === 3) {
+          // Security Configuration
+          const section = createSection('Security Configuration', [
+            createToggle(
+              'Enable CORS?',
+              configState.security.corsEnabled,
+              (value) => { configState.security.corsEnabled = value; }
+            ),
+            createTextInput(
+              'Allowed CORS Origins (comma-separated):',
+              configState.security.corsOrigins,
+              (value) => { configState.security.corsOrigins = value; },
+              'https://example.com, https://app.example.com'
+            ),
+            createToggle(
+              'Enable Rate Limiting?',
+              configState.security.rateLimitEnabled,
+              (value) => { configState.security.rateLimitEnabled = value; }
+            ),
+            createTextInput(
+              'Rate Limit (requests per minute):',
+              configState.security.rateLimitRequests,
+              (value) => { configState.security.rateLimitRequests = value; },
+              '100'
+            ),
+            createAlert('success', 'Configuration complete! Review and save your settings.')
+          ]);
+          container.appendChild(section);
+        }
+      },
+
+      onLoad: () => {
+        loadConfigFromFile((config) => {
+          Object.assign(configState, config);
+          wizard.refreshStep();
+        });
+      },
+
+      onSave: () => {
+        saveConfigToFile(configState);
+      },
+
+      onExport: () => {
+        const markdown = `# Application Configuration
+
+## Database
+- **Host:** ${configState.database.host}
+- **Port:** ${configState.database.port}
+- **Database:** ${configState.database.name}
+- **SSL Enabled:** ${configState.database.sslEnabled ? 'Yes' : 'No'}
+
+## Cache
+- **Enabled:** ${configState.cache.enabled ? 'Yes' : 'No'}
+- **Backend:** ${configState.cache.backend}
+- **TTL:** ${configState.cache.ttl} seconds
+
+## Logging
+- **Level:** ${configState.logging.level}
+- **Cloud Logging:** ${configState.logging.enableCloudLogging ? 'Yes' : 'No'}
+- **Retention:** ${configState.logging.retentionDays} days
+
+## Security
+- **CORS Enabled:** ${configState.security.corsEnabled ? 'Yes' : 'No'}
+- **CORS Origins:** ${configState.security.corsOrigins || '(none)'}
+- **Rate Limiting:** ${configState.security.rateLimitEnabled ? 'Yes' : 'No'}
+- **Rate Limit:** ${configState.security.rateLimitRequests} requests/minute
+
+---
+
+Generated on ${new Date().toISOString().split('T')[0]}
+`;
+        const { exportMarkdown } = await import('../src/index.js');
+        exportMarkdown('app-config.md', markdown);
+      }
+    });
+
+    // Render the wizard
+    wizard.render();
+  </script>
+</body>
+</html>

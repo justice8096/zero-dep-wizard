@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding Wizard — zero-dep-wizard</title>
+</head>
+<body>
+  <script type="module">
+    import {
+      createWizard,
+      createSection,
+      createToggle,
+      createSelect,
+      createTextInput,
+      createTextArea,
+      createAlert,
+      injectCSS,
+      el
+    } from '../src/index.js';
+    import { DEFAULT_THEME } from '../src/themes/default.js';
+
+    // Initialize theme
+    injectCSS(DEFAULT_THEME);
+
+    // Onboarding state
+    let onboardingState = {
+      personal: {
+        fullName: '',
+        email: '',
+        department: ''
+      },
+      preferences: {
+        theme: 'light',
+        notifications: true,
+        twoFactorAuth: false
+      },
+      training: {
+        completedTraining: false,
+        dataPrivacyAgreed: false,
+        codeOfConductAgreed: false
+      }
+    };
+
+    // Create wizard
+    const wizard = createWizard({
+      title: 'Welcome to Our Platform',
+      subtitle: 'Let\'s get you set up in just three steps',
+      totalSteps: 3,
+      stepLabels: ['Personal Info', 'Preferences', 'Training & Agreements'],
+      stateKey: 'onboarding-wizard',
+      getState: () => onboardingState,
+      setState: (state) => { 
+        Object.assign(onboardingState, state);
+      },
+
+      renderStep: (stepNum, container) => {
+        if (stepNum === 0) {
+          // Step 1: Personal Information
+          const section = createSection('Tell Us About Yourself', [
+            createTextInput(
+              'Full Name:',
+              onboardingState.personal.fullName,
+              (value) => { onboardingState.personal.fullName = value; }
+            ),
+            createTextInput(
+              'Email Address:',
+              onboardingState.personal.email,
+              (value) => { onboardingState.personal.email = value; },
+              'your@company.com'
+            ),
+            createSelect(
+              'Department:',
+              [
+                { value: '', label: '— Select a department —' },
+                { value: 'engineering', label: 'Engineering' },
+                { value: 'product', label: 'Product' },
+                { value: 'design', label: 'Design' },
+                { value: 'ops', label: 'Operations' },
+                { value: 'sales', label: 'Sales' },
+                { value: 'other', label: 'Other' }
+              ],
+              onboardingState.personal.department,
+              (value) => { onboardingState.personal.department = value; }
+            )
+          ]);
+          container.appendChild(section);
+        } else if (stepNum === 1) {
+          // Step 2: Preferences
+          const section = createSection('Set Your Preferences', [
+            createSelect(
+              'Theme Preference:',
+              [
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+                { value: 'auto', label: 'Auto (system)' }
+              ],
+              onboardingState.preferences.theme,
+              (value) => { onboardingState.preferences.theme = value; }
+            ),
+            createToggle(
+              'Enable Email Notifications?',
+              onboardingState.preferences.notifications,
+              (value) => { onboardingState.preferences.notifications = value; }
+            ),
+            createToggle(
+              'Enable Two-Factor Authentication?',
+              onboardingState.preferences.twoFactorAuth,
+              (value) => { onboardingState.preferences.twoFactorAuth = value; }
+            ),
+            createAlert('info', 'You can change these settings anytime in your account preferences.')
+          ]);
+          container.appendChild(section);
+        } else if (stepNum === 2) {
+          // Step 3: Training & Agreements
+          const section = createSection('Training & Agreements', [
+            createToggle(
+              'I have completed the onboarding training',
+              onboardingState.training.completedTraining,
+              (value) => { onboardingState.training.completedTraining = value; }
+            ),
+            createToggle(
+              'I agree to the Data Privacy Policy',
+              onboardingState.training.dataPrivacyAgreed,
+              (value) => { onboardingState.training.dataPrivacyAgreed = value; }
+            ),
+            createToggle(
+              'I agree to the Code of Conduct',
+              onboardingState.training.codeOfConductAgreed,
+              (value) => { onboardingState.training.codeOfConductAgreed = value; }
+            )
+          ]);
+          container.appendChild(section);
+
+          if (onboardingState.training.completedTraining && 
+              onboardingState.training.dataPrivacyAgreed && 
+              onboardingState.training.codeOfConductAgreed) {
+            const completeBtn = el('button', {
+              className: 'btn primary',
+              textContent: 'Complete Onboarding',
+              onClick: () => {
+                alert('Welcome to the platform, ' + onboardingState.personal.fullName + '! Your account is ready.');
+                wizard.saveNow();
+              }
+            });
+            container.appendChild(completeBtn);
+          } else {
+            container.appendChild(createAlert('warning', 'Please agree to all items before continuing.'));
+          }
+        }
+      }
+    });
+
+    // Render the wizard
+    wizard.render();
+  </script>
+</body>
+</html>
