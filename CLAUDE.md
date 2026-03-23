@@ -47,3 +47,17 @@ wizard.render();
 - UI primitives: el(), createSection(), createToggle(), createSelect(), createTextInput(), createTextArea(), createAlert()
 - Debounced auto-save (300ms) on any input event within the step container
 - Progress dots: .active (current), .done (completed)
+
+
+## LLM Compliance Integration
+This framework powers all 21 interactive compliance assessment tools in the LLM Compliance Evidence Collection pipeline (compliance-assessment-tools project).
+
+### How It's Used
+Every compliance assessment tool (risk classification, bias testing, PIA, consent design, etc.) uses `createWizard()` from this library:
+- Multi-step form with state persistence via sessionStorage
+- Component helpers: createToggle, createSelect, createTextInput, createTextArea
+- Config import/export for compliance-config.json integration
+- Navy/amber/teal design system shared across all tools
+
+### Building New Compliance Tools
+When creating new assessment tools, use this framework following the pattern in compliance-assessment-tools/tools/*.html.

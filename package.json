@@ -10,6 +10,9 @@
     "./themes/default": "./src/themes/default.js",
     "./themes/light": "./src/themes/light.js"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "author": "Justice",
   "license": "MIT",
   "repository": {
@@ -29,5 +32,9 @@
   "files": [
     "src",
     "examples"
-  ]
+  ],
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "jsdom": "^25.0.0"
+  }
 }
